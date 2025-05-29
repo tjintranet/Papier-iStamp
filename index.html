@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Scanner</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body style="background-color: #f5f5f5;">
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow">
+                    <div class="card-header bg-dark text-white text-center">
+                        <h4 class="mb-0">Papier iStamp</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="order-scanner-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        (function() {
+            const container = document.getElementById('order-scanner-container');
+            const shadow = container.attachShadow({ mode: 'open' });
+            // Inject your HTML and CSS into the Shadow DOM
+            shadow.innerHTML = `
+                <style>
+                    /* Your CSS here */
+                    body {
+                        font-family: 'Lato', sans-serif;
+                        margin: 0;
+                        padding: 20px;
+                    }
+                    .custom-btn {
+                        font-family: 'Lato', sans-serif;
+                        background-color: #2c3e50;
+                        border-color: #2c3e50;
+                        color: white;
+                        padding: 10px 20px;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        width: 100%;
+                        height: 45px;
+                        text-transform: uppercase;
+                        font-weight: 600;
+                        transition: all 0.3s ease;
+                    }
+                    .custom-btn:hover {
+                        background-color: #1a252f;
+                        border-color: #1a252f;
+                        transform: translateY(-1px);
+                    }
+                    .success-message {
+                        display: none;
+                        background-color: #d4edda;
+                        color: #155724;
+                        padding: 12px;
+                        border-radius: 5px;
+                        margin-top: 20px;
+                        text-align: center;
+                        border: 1px solid #c3e6cb;
+                        font-weight: 500;
+                    }
+                    .form-label {
+                        display: block;
+                        margin-bottom: 8px;
+                        font-weight: 600;
+                        color: #2c3e50;
+                        font-family: 'Lato', sans-serif;
+                    }
+                    .form-control {
+                        width: 100%;
+                        padding: 12px;
+                        margin-bottom: 20px;
+                        border: 2px solid #e9ecef;
+                        border-radius: 5px;
+                        box-sizing: border-box;
+                        font-size: 16px;
+                        font-family: 'Lato', sans-serif;
+                        transition: border-color 0.3s ease;
+                    }
+                    .form-control:focus {
+                        outline: none;
+                        border-color: #2c3e50;
+                        box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.25);
+                    }
+                    .form-container {
+                        padding: 10px;
+                    }
+                </style>
+                <div class="form-container">
+                    <form id="orderForm">
+                        <label for="orderNumber" class="form-label">Scan Order Number:</label>
+                        <input type="text" class="form-control" id="orderNumber" name="orderNumber" required autofocus placeholder="Enter order number...">
+                        <button type="submit" class="custom-btn">Submit</button>
+                    </form>
+                    <div id="successMessage" class="success-message">
+                        ✓ Order successfully submitted!
+                    </div>
+                </div>
+            `;
+            // Move the JavaScript logic outside of the string
+            const orderForm = shadow.querySelector('#orderForm');
+            const orderNumberInput = shadow.querySelector('#orderNumber');
+            const successMessage = shadow.querySelector('#successMessage');
+            
+            orderForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const orderNumber = orderNumberInput.value.trim();
+                
+                if (!orderNumber) {
+                    alert('Please enter an order number');
+                    return;
+                }
+                
+                const xmlString = `<?xml version="1.0" encoding="UTF-8"?>
+<Order>
+    <Order_Number>${orderNumber}</Order_Number>
+</Order>`;
+                
+                fetch('http://192.168.10.233:51080/pickup-papier-csv', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/xml'
+                    },
+                    body: xmlString
+                })
+                .then(response => {
+                    successMessage.style.display = 'block';
+                    orderNumberInput.value = '';
+                    orderNumberInput.focus();
+                    setTimeout(function() {
+                        successMessage.style.display = 'none';
+                    }, 700);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error submitting order. Please try again.');
+                });
+            });
+        })();
+    </script>
+</body>
+</html>
